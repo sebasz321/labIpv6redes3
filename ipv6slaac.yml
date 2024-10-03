@@ -1,0 +1,56 @@
+name: ipv6slaac
+topology:
+  nodes:
+    # host LinUX
+    PC1:
+      kind: linux
+      image: praqma/network-multitool:extra
+      exec:
+      - ip -6 route del default dev eth0
+      
+    ######################################################################################
+    
+    FRR1:
+      kind: linux
+      image: quay.io/frrouting/frr:8.4.1     # trae la imagen iso de la nube y luego el mv la desacrga en mi maquina
+      binds:           # Trae archivos externos
+        - router1/daemons:/etc/frr/daemons
+        - router1/frr.conf:/etc/frr/frr.conf
+      exec:
+       - "sysctl -w net.ipv6.conf.all.forwarding=1"
+       
+    ######################################################################################
+    
+    FRR2:
+      kind: linux
+      image: quay.io/frrouting/frr:8.4.1     # trae la imagen iso de la nube y luego el mv la desacrga en mi maquina
+      binds:           # Trae archivos externos
+        - router2/daemons:/etc/frr/daemons
+        - router2/frr.conf:/etc/frr/frr.conf
+      exec:
+       - "sysctl -w net.ipv6.conf.all.forwarding=1"
+
+    ######################################################################################
+    
+    FRR3:
+      kind: linux
+      image: quay.io/frrouting/frr:8.4.1     # trae la imagen iso de la nube y luego el mv la desacrga en mi maquina
+      binds:           # Trae archivos externos
+        - router3/daemons:/etc/frr/daemons
+        - router3/frr.conf:/etc/frr/frr.conf
+      exec:
+       - "sysctl -w net.ipv6.conf.all.forwarding=1"   
+       
+    ######################################################################################
+    
+    PC2:
+      kind: linux
+      image: docker.io/esanchezv/kaliipv6v2:latest    #imagen en repositorio creada por ernesto, basa en linux
+      exec:
+      - ip -6 route del default dev eth0
+       
+  links:
+   - endpoints: ["PC1:eth1", "FRR1:eth1"]    #ETH0 ES PARA MANAGMENT, no se puede usar, se la reserva conteinerlab
+   - endpoints: ["FRR1:eth2", "FRR2:eth1"]
+   - endpoints: ["FRR2:eth2", "FRR3:eth1"]
+   - endpoints: ["FRR3:eth2", "PC2:eth1"]
